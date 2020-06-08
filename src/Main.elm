@@ -1,11 +1,9 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html, Attribute, button, div, li, ul, text, input, h2, span, label, fieldset)
+import Html exposing (Html, Attribute, button, div, text, input, h2, span, label, fieldset)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onClick)
-import Html exposing (p)
-import List exposing (all)
 
 
 -- INIT
@@ -126,7 +124,7 @@ renderList lst visibility =
         |> List.map (\e -> 
             div todoStyle
                 [ input [ type_ "checkbox", checked e.completed, onClick (ToggleComplete e.id)] []
-                , span [] [ text (e.description ++ ", " ++ e.id) ]
+                , span [] [ text e.description ]
                 ]
         )
        |> div [ class "list" ]
