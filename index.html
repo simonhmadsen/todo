@@ -4450,11 +4450,7 @@ var $elm$core$Basics$EQ = {$: 'EQ'};
 var $elm$core$Basics$GT = {$: 'GT'};
 var $elm$core$Basics$LT = {$: 'LT'};
 var $author$project$Main$All = {$: 'All'};
-var $author$project$Main$Model = F4(
-	function (entries, tempDescription, idCounter, visibility) {
-		return {entries: entries, idCounter: idCounter, tempDescription: tempDescription, visibility: visibility};
-	});
-var $author$project$Main$init = A4($author$project$Main$Model, _List_Nil, '', 0, $author$project$Main$All);
+var $author$project$Main$init = {entries: _List_Nil, idCounter: 0, tempDescription: '', visibility: $author$project$Main$All};
 var $elm$core$Result$Err = function (a) {
 	return {$: 'Err', a: a};
 };
@@ -5185,8 +5181,6 @@ var $elm$browser$Browser$sandbox = function (impl) {
 			view: impl.view
 		});
 };
-var $author$project$Main$Active = {$: 'Active'};
-var $author$project$Main$Completed = {$: 'Completed'};
 var $author$project$Main$Entry = F3(
 	function (description, completed, id) {
 		return {completed: completed, description: description, id: id};
@@ -5206,7 +5200,7 @@ var $elm$core$List$singleton = function (value) {
 };
 var $elm$core$Basics$not = _Basics_not;
 var $author$project$Main$toggleComplete = F2(
-	function (entry, id) {
+	function (id, entry) {
 		return _Utils_eq(entry.id, id) ? _Utils_update(
 			entry,
 			{completed: !entry.completed}) : entry;
@@ -5214,68 +5208,53 @@ var $author$project$Main$toggleComplete = F2(
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
-			case 'ToggleComplete':
+			case 'CompleteToggled':
 				var id = msg.a;
-				return A4(
-					$author$project$Main$Model,
-					A2(
-						$elm$core$List$map,
-						function (e) {
-							return A2($author$project$Main$toggleComplete, e, id);
-						},
-						model.entries),
-					model.tempDescription,
-					model.idCounter,
-					model.visibility);
-			case 'Commit':
-				return A4(
-					$author$project$Main$Model,
-					A2(
-						$elm$core$List$append,
-						model.entries,
-						$elm$core$List$singleton(
-							A3(
-								$author$project$Main$Entry,
-								model.tempDescription,
-								false,
-								A2(
-									$elm$core$String$append,
-									'todo_',
-									$elm$core$String$fromInt(model.idCounter))))),
-					'',
-					model.idCounter + 1,
-					model.visibility);
-			case 'UpdateTemp':
+				return _Utils_update(
+					model,
+					{
+						entries: A2(
+							$elm$core$List$map,
+							$author$project$Main$toggleComplete(id),
+							model.entries)
+					});
+			case 'TodoCommitted':
+				return _Utils_update(
+					model,
+					{
+						entries: A2(
+							$elm$core$List$append,
+							model.entries,
+							$elm$core$List$singleton(
+								A3(
+									$author$project$Main$Entry,
+									model.tempDescription,
+									false,
+									A2(
+										$elm$core$String$append,
+										'todo_',
+										$elm$core$String$fromInt(model.idCounter)))))
+					});
+			case 'TempUpdated':
 				var description = msg.a;
 				return _Utils_update(
 					model,
 					{tempDescription: description});
 			default:
 				var visibility = msg.a;
-				switch (visibility) {
-					case 'All':
-						return _Utils_update(
-							model,
-							{visibility: $author$project$Main$All});
-					case 'Active':
-						return _Utils_update(
-							model,
-							{visibility: $author$project$Main$Active});
-					case 'Completed':
-						return _Utils_update(
-							model,
-							{visibility: $author$project$Main$Completed});
-					default:
-						return model;
-				}
+				return _Utils_update(
+					model,
+					{visibility: visibility});
 		}
 	});
-var $author$project$Main$Commit = {$: 'Commit'};
-var $author$project$Main$SetVisibility = function (a) {
-	return {$: 'SetVisibility', a: a};
+var $author$project$Main$Active = {$: 'Active'};
+var $author$project$Main$Completed = {$: 'Completed'};
+var $author$project$Main$TempUpdated = function (a) {
+	return {$: 'TempUpdated', a: a};
 };
-var $author$project$Main$UpdateTemp = function (a) {
-	return {$: 'UpdateTemp', a: a};
+var $author$project$Main$TodoCommitted = {$: 'TodoCommitted'};
+var $author$project$Main$VisibilitySet = function (a) {
+	return {$: 'VisibilitySet', a: a};
 };
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$div = _VirtualDom_node('div');
@@ -5370,8 +5349,8 @@ var $author$project$Main$radio = F2(
 					$elm$html$Html$text(value)
 				]));
 	});
-var $author$project$Main$ToggleComplete = function (a) {
-	return {$: 'ToggleComplete', a: a};
+var $author$project$Main$CompleteToggled = function (a) {
+	return {$: 'CompleteToggled', a: a};
 };
 var $elm$json$Json$Encode$bool = _Json_wrap;
 var $elm$html$Html$Attributes$boolProperty = F2(
@@ -5394,7 +5373,6 @@ var $elm$core$List$filter = F2(
 			_List_Nil,
 			list);
 	});
-var $elm$core$Basics$neq = _Utils_notEqual;
 var $elm$html$Html$span = _VirtualDom_node('span');
 var $author$project$Main$todoStyle = _List_fromArray(
 	[
@@ -5425,7 +5403,7 @@ var $author$project$Main$renderList = F2(
 										$elm$html$Html$Attributes$type_('checkbox'),
 										$elm$html$Html$Attributes$checked(e.completed),
 										$elm$html$Html$Events$onClick(
-										$author$project$Main$ToggleComplete(e.id))
+										$author$project$Main$CompleteToggled(e.id))
 									]),
 								_List_Nil),
 								A2(
@@ -5465,14 +5443,14 @@ var $author$project$Main$view = function (model) {
 						A2($elm$html$Html$Attributes$style, 'margin', '30px 10px'),
 						$elm$html$Html$Attributes$placeholder('Add TODO'),
 						$elm$html$Html$Attributes$value(model.tempDescription),
-						$elm$html$Html$Events$onInput($author$project$Main$UpdateTemp)
+						$elm$html$Html$Events$onInput($author$project$Main$TempUpdated)
 					]),
 				_List_Nil),
 				A2(
 				$elm$html$Html$button,
 				_List_fromArray(
 					[
-						$elm$html$Html$Events$onClick($author$project$Main$Commit)
+						$elm$html$Html$Events$onClick($author$project$Main$TodoCommitted)
 					]),
 				_List_fromArray(
 					[
@@ -5491,15 +5469,15 @@ var $author$project$Main$view = function (model) {
 								A2(
 								$author$project$Main$radio,
 								'All',
-								$author$project$Main$SetVisibility('All')),
+								$author$project$Main$VisibilitySet($author$project$Main$All)),
 								A2(
 								$author$project$Main$radio,
 								'Active',
-								$author$project$Main$SetVisibility('Active')),
+								$author$project$Main$VisibilitySet($author$project$Main$Active)),
 								A2(
 								$author$project$Main$radio,
 								'Completed',
-								$author$project$Main$SetVisibility('Completed'))
+								$author$project$Main$VisibilitySet($author$project$Main$Completed))
 							]))
 					])),
 				A2(

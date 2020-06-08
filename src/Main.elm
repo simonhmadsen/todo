@@ -1,31 +1,43 @@
-module Main exposing (..)
+module Main exposing (main)
 
 import Browser
-import Html exposing (Html, Attribute, button, div, text, input, h2, span, label, fieldset)
-import Html.Attributes exposing (..)
-import Html.Events exposing (onInput, onClick)
+import Html exposing (Attribute, Html, button, div, fieldset, h2, input, label, span, text)
+import Html.Attributes as Attr
+import Html.Events exposing (onClick, onInput)
+
 
 
 -- INIT
 
-main = Browser.sandbox
-    { init = init
-    , view = view
-    , update = update
-    }
+
+main =
+    Browser.sandbox
+        { init = init
+        , view = view
+        , update = update
+        }
+
 
 init : Model
 init =
-  Model [] "" 0 All
+    { entries = []
+    , tempDescription = ""
+    , idCounter = 0
+    , visibility = All
+    }
+
+
 
 -- MODEL
 
+
 type alias Model =
-    { entries : List Entry 
+    { entries : List Entry
     , tempDescription : String
     , idCounter : Int
     , visibility : Visibility
     }
+
 
 type alias Entry =
     { description : String
@@ -33,105 +45,115 @@ type alias Entry =
     , id : String
     }
 
-type Visibility 
+
+type Visibility
     = All
     | Active
     | Completed
 
+
+
 -- MESSAGE
 
-type Msg 
-    = ToggleComplete String
-    | Commit
-    | UpdateTemp String
-    | SetVisibility String
+
+type Msg
+    = CompleteToggled String
+    | TodoCommitted
+    | TempUpdated String
+    | VisibilitySet Visibility
+
+
 
 -- UPDATE
+
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        ToggleComplete id ->
-            Model 
-                (List.map (\e -> toggleComplete e id) model.entries)
-                model.tempDescription
-                model.idCounter
-                model.visibility
+        CompleteToggled id ->
+            { model | entries = List.map (toggleComplete id) model.entries }
 
-        Commit ->
-            Model (List.append model.entries
-                <| List.singleton
-                <| Entry model.tempDescription False
-                <| String.append "todo_"
-                <| String.fromInt
-                <| model.idCounter)
-                 ""
-                 (model.idCounter + 1)
-                 model.visibility
+        TodoCommitted ->
+            { model
+                | entries =
+                    model.idCounter
+                        |> String.fromInt
+                        |> String.append "todo_"
+                        |> Entry model.tempDescription False
+                        |> List.singleton
+                        |> List.append model.entries
+            }
 
-        UpdateTemp description ->
+        TempUpdated description ->
             { model | tempDescription = description }
 
-        SetVisibility visibility ->
-            case visibility of
-                "All" -> { model | visibility = All }
-                "Active" -> { model | visibility = Active }
-                "Completed" -> { model | visibility = Completed }
-                _ -> model
+        VisibilitySet visibility ->
+            { model | visibility = visibility }
 
-toggleComplete : Entry -> String -> Entry
-toggleComplete entry id =
+
+toggleComplete : String -> Entry -> Entry
+toggleComplete id entry =
     if entry.id == id then
         { entry | completed = not entry.completed }
-    else 
+
+    else
         entry
 
 
 view : Model -> Html Msg
 view model =
     div []
-        [ input [ style "margin" "30px 10px", placeholder "Add TODO", value model.tempDescription, onInput UpdateTemp ] []
-        , button [ onClick Commit ] [ text "Submit" ]
-        , div [] 
+        [ input [ Attr.style "margin" "30px 10px", Attr.placeholder "Add TODO", Attr.value model.tempDescription, onInput TempUpdated ] []
+        , button [ onClick TodoCommitted ] [ text "Submit" ]
+        , div []
             [ fieldset []
-                [ radio "All" (SetVisibility "All")
-                , radio "Active" (SetVisibility "Active")
-                , radio "Completed" (SetVisibility "Completed")
+                [ radio "All" (VisibilitySet All)
+                , radio "Active" (VisibilitySet Active)
+                , radio "Completed" (VisibilitySet Completed)
                 ]
             ]
-        , h2 [] [ text "Todos"]
+        , h2 [] [ text "Todos" ]
         , renderList model.entries model.visibility
         ]
 
+
 radio : String -> msg -> Html msg
 radio value msg =
-  label
-    [ style "padding" "20px" ]
-    [ input [ type_ "radio", name "visibility", onClick msg ] []
-    , text value
-    ]
+    label
+        [ Attr.style "padding" "20px" ]
+        [ input [ Attr.type_ "radio", Attr.name "visibility", onClick msg ] []
+        , text value
+        ]
 
 
 renderList : List Entry -> Visibility -> Html Msg
 renderList lst visibility =
     lst
-        |> List.filter (\e ->
-            case visibility of
-                All -> True
-                Active -> e.completed /= True
-                Completed -> e.completed == True               
-        )
-        |> List.map (\e -> 
-            div todoStyle
-                [ input [ type_ "checkbox", checked e.completed, onClick (ToggleComplete e.id)] []
-                , span [] [ text e.description ]
-                ]
-        )
-       |> div [ class "list" ]
+        |> List.filter
+            (\e ->
+                case visibility of
+                    All ->
+                        True
+
+                    Active ->
+                        not e.completed
+
+                    Completed ->
+                        e.completed
+            )
+        |> List.map
+            (\e ->
+                div todoStyle
+                    [ input [ Attr.type_ "checkbox", Attr.checked e.completed, onClick (CompleteToggled e.id) ] []
+                    , span [] [ text e.description ]
+                    ]
+            )
+        |> div [ Attr.class "list" ]
+
 
 todoStyle : List (Attribute msg)
 todoStyle =
-    [ style "padding" "10px"
-    , style "margin" "2px"
-    , style "border" "1px solid #000" 
+    [ Attr.style "padding" "10px"
+    , Attr.style "margin" "2px"
+    , Attr.style "border" "1px solid #000"
     ]
